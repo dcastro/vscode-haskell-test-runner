@@ -1,6 +1,12 @@
-# README
-## This is the README for the "languageprovider-sample" 
--------------------
+# Haskell Test Runner for VSCode
+
+## Troubleshooting
+
+* > cannot satisfy -package quickcheck-instances-0.3.12
+
+    You might have to run `stack build && stack test` once
+
+## This is the README for the "languageprovider-sample"
 
 This folder contains a sample VS code extension that demonstrates an extension that runs a language server
 
@@ -11,8 +17,8 @@ The code for the extension is in the 'client' folder. It uses the 'vscode-langua
 
 The language server is located in the 'server' folder. 
 
+## How to run locally
 
-# How to run locally
 * `npm install` to initialize the extension and the server
 * `npm run compile` to compile the extension and the server
 * open this folder in VS Code. In the Debug viewlet, run 'Launch Client' from drop-down to launch the extension and attach to the extension.
