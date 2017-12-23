@@ -15,7 +15,7 @@ and uses the server to provide validation and completion proposals.
 
 The code for the extension is in the 'client' folder. It uses the 'vscode-languageclient' node module to launch the language server.
 
-The language server is located in the 'server' folder. 
+The language server is located in the 'server' folder.
 
 ## How to run locally
 

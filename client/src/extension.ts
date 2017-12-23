@@ -5,20 +5,18 @@
 'use strict';
 
 import * as path from 'path';
-import * as stack from './stack';
 
 import { workspace, ExtensionContext } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
 
+	startLangServer(context);
+	
+};
 
-	stack.getTargets().then(ts => {
-		console.log(JSON.stringify(ts, null, 2));
-	}).catch(ex => {
-		console.log(JSON.stringify(ex, null, 2));
-	});
 
+function startLangServer(context: ExtensionContext) {
 	// The server is implemented in node
 	let serverModule = context.asAbsolutePath(path.join('server', 'server.js'));
 	// The debug options for the server

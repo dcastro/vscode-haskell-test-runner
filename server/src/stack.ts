@@ -1,18 +1,16 @@
-import { workspace } from 'vscode';
 import * as cp from 'child_process';
-import * as _ from 'lodash';
 
 type Target = string
 type PkgName = string
 type Dependencies = string
 
-export async function getTargets(): Promise<Target[][]> {
+export async function getTargets(root: string): Promise<Target[][]> {
 
-  const targetsAndPkg = await getTargetsAndPkg();
+  const targetsAndPkg = await getTargetsAndPkg(root);
 
   const targets = await Promise.all(targetsAndPkg.map(async t => {
     const [target, pkgName] = t;
-    const deps = await getDependencies(target);
+    const deps = await getDependencies(root, target);
     
     if ( ! /^hspec .*$/mg.test(deps))
       return [];
@@ -30,12 +28,12 @@ export async function getTargets(): Promise<Target[][]> {
   return targets.filter(ts => ts.length > 0);
 }
 
-function getTargetsAndPkg(): Promise<[Target, PkgName][]> {
+function getTargetsAndPkg(root: string): Promise<[Target, PkgName][]> {
 
   return new Promise<[Target, PkgName][]>((resolve, reject) => {
   
     const cwd = process.cwd();
-    process.chdir(workspace.rootPath);
+    process.chdir(root);
 
     cp.exec(`stack ide targets`, (error, stdout, stderr) => {
       if (error) reject(error);
@@ -48,11 +46,11 @@ function getTargetsAndPkg(): Promise<[Target, PkgName][]> {
   });
 }
 
-function getDependencies(target: Target): Promise<Dependencies> {
+function getDependencies(root: string, target: Target): Promise<Dependencies> {
   return new Promise((resolve, reject) => {
 
     const cwd = process.cwd();
-    process.chdir(workspace.rootPath);
+    process.chdir(root);
 
     cp.exec(`stack list-dependencies ${target} --depth 1`, (error, stdout, stderr) => {
       if (error) reject(error);
