@@ -7,9 +7,14 @@
 import {
 	IPCMessageReader, IPCMessageWriter, createConnection, IConnection, TextDocuments, TextDocument, 
 	Diagnostic, DiagnosticSeverity, InitializeResult, TextDocumentPositionParams, CompletionItem, 
-	CompletionItemKind
+	CompletionItemKind,
+	CodeLensParams,
+	CancellationToken
 } from 'vscode-languageserver';
 import * as stack from './stack';
+import { InteroSvc, spawnIntero } from './intero';
+import { spawn } from 'child_process';
+import { InteroController } from './interoController';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -20,6 +25,8 @@ let documents: TextDocuments = new TextDocuments();
 // Make the text document manager listen on the connection
 // for open, change and close text document events
 documents.listen(connection);
+
+let intero: InteroController;
 
 // After the server has started the client sends an initialize request. The server receives
 // in the passed params the rootPath of the workspace plus the client capabilities. 
@@ -32,6 +39,10 @@ connection.onInitialize(async (params): Promise<InitializeResult> => {
 	console.log('Initializing targets:');
 	targets.map(x => console.log(x));
 
+	const svcs = await Promise.all(targets.map(spawnIntero));
+
+	intero = new InteroController(svcs);
+
 	return {
 		capabilities: {
 			// Tell the client that the server works in FULL text document sync mode
@@ -39,9 +50,20 @@ connection.onInitialize(async (params): Promise<InitializeResult> => {
 			// Tell the client that the server support code complete
 			completionProvider: {
 				resolveProvider: true
+			},
+			codeLensProvider : {
+				resolveProvider: true
 			}
 		}
 	}
+});
+
+connection.onCodeLens(async (ps: CodeLensParams, c: CancellationToken) => {
+
+	const uri = ps.textDocument.uri;
+	const doc = documents.get(uri);
+
+	return await intero.codeLenses(ps.textDocument.uri);
 });
 
 // The content of a text document has changed. This event is emitted
