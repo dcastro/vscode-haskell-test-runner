@@ -12,6 +12,8 @@
 		"url": "https://github.com/Microsoft/vscode-extension-samples"
 	},
 	"dependencies": {
+		"@types/lodash": "^4.14.91",
+		"lodash": "^4.17.4",
 		"vscode-languageserver": "^3.4.2"
 	},
 	"scripts": {

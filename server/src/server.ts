@@ -12,7 +12,7 @@ import {
 	CancellationToken
 } from 'vscode-languageserver';
 import * as stack from './stack';
-import { InteroSvc, spawnIntero } from './intero';
+import { InteroSvc, spawnIntero, Intero } from './intero';
 import { spawn } from 'child_process';
 import { InteroController } from './interoController';
 
@@ -63,8 +63,25 @@ connection.onCodeLens(async (ps: CodeLensParams, c: CancellationToken) => {
 	const uri = ps.textDocument.uri;
 	const doc = documents.get(uri);
 
-	return await intero.codeLenses(ps.textDocument.uri);
+	const types = intero.svcs.map(async svc => {
+		if (svc instanceof Intero) {
+			return {
+				targets: svc.targets,
+				allTypes: await svc.files.get
+			};
+		}
+		else {
+			return {
+				targets: svc.targets
+			};
+		}
+	})
+
+	console.log(JSON.stringify(await Promise.all(types), null, 2));
+
+	return [];
 });
+
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.

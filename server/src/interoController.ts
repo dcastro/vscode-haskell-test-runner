@@ -4,13 +4,21 @@ import { CodeLens } from "vscode-languageserver";
 
 export class InteroController {
   public constructor(
-    private readonly svcs: InteroSvc[]
+    readonly svcs: InteroSvc[]
   ) { }
 
 
   public async codeLenses(file: string): Promise<CodeLens[]> {
 
-    await Promise.all(this.svcs.map(x => x.allTypes()));
+    // TODO:
     return [];
+  }
+
+  /**
+   * Assumes each file belongs to one target only
+   */
+  public async findTarget(file: string): Promise<string> {
+    // TODO:
+    return null;
   }
 }

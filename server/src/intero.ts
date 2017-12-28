@@ -1,34 +1,51 @@
 import * as cp from 'child_process';
 import { ChildProcess } from 'child_process';
 import { InteroProxy, RawResponse } from './interoProxy';
+import { Lazy } from './utils/lazy';
+import { File, allTypes } from './allTypes';
 
 export async function spawnIntero(targets: string[]): Promise<InteroSvc> {
-  const opts = ['ghci', '--with-ghc', 'intero'].concat(targets);
-  const ps = cp.spawn('stack', opts);
 
-  const proxy = new InteroProxy(ps);
-  const initRsp = await init(proxy);
+  try {
+    const opts = ['ghci', '--with-ghc', 'intero'].concat(targets);
+    const ps = cp.spawn('stack', opts);
 
-  return new InteroSvc(proxy, targets);
+    const proxy = new InteroProxy(ps);
+    const initRsp = await init(proxy);
+
+    return new Intero(proxy, targets);
+  } catch(ex) {
+    console.log(`Failed to initialize intero for targets ${targets}: ${ex}`);
+    return new InteroFailed(targets);
+  }
 }
 
 async function init(intero: InteroProxy): Promise<RawResponse> {
   return await intero.sendRawRequest(':set prompt "\\4"');
 }
 
-export class InteroSvc {
+export type InteroSvc = Intero | InteroFailed
+
+export class Intero {
   public constructor(
-    private readonly proxy: InteroProxy,
-    public  readonly targets: string[]
+    readonly proxy: InteroProxy,
+    readonly targets: string[]
   ) {}
 
-  public async allTypes(): Promise<string> {
-    const rsp = await this.proxy.sendRawRequest(':all-types');
+  readonly files = new Lazy<Promise<File[]>>(() => {
+    return allTypes(this.proxy);
+  });
+}
 
-    const lines = rsp.rawout.split("\n");
 
-    console.log(JSON.stringify(lines.slice(0, 3), null, 2));
+export class InteroFailed {
+  public constructor(
+    public readonly targets: string[]
+  ) {}
 
-    return rsp.rawout;
+  public async retry(): Promise<InteroSvc> {
+    // TODO:
+    return null;
   }
 }
+

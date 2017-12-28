@@ -1,4 +1,5 @@
 import * as cp from 'child_process';
+import * as regex from './utils/regex';
 
 type Target = string
 type PkgName = string
@@ -64,15 +65,5 @@ function getDependencies(root: string, target: Target): Promise<Dependencies> {
 }
 
 function parseTargets(text: string): [Target, PkgName][] {
-  return extract(text, /^(.+):test:.+$/mg).map(m => <[Target, PkgName]> [m[0], m[1]]);
+  return regex.extract(text, /^(.+):test:.+$/mg).map(m => <[Target, PkgName]> [m[0], m[1]]);
 }
-
-function extract(text: string, r: RegExp): RegExpExecArray[] {
-  const matches: RegExpExecArray[] = [];
-  let match: RegExpExecArray;
-  while ((match = r.exec(text)) != null) {
-      matches.push(match);
-  }
-  return matches;
-}
-
