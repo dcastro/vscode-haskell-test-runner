@@ -4,7 +4,7 @@
 
 * > cannot satisfy -package quickcheck-instances-0.3.12
 
-    You might have to run `stack build && stack test` once
+    You might have to run `stack build --test` once
 
 ## This is the README for the "languageprovider-sample"
 

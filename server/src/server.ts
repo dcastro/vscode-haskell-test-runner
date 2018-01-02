@@ -34,7 +34,9 @@ let workspaceRoot: string;
 connection.onInitialize(async (params): Promise<InitializeResult> => {
 	workspaceRoot = params.rootPath;
 
-	const targets = await stack.getTargets(workspaceRoot);
+	const directDepsScript = params.initializationOptions.directDepsScript
+
+	const targets = await stack.getTargets(workspaceRoot, directDepsScript);
 
 	console.log('Initializing targets:');
 	targets.map(x => console.log(x));

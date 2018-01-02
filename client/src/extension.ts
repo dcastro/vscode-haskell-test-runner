@@ -38,6 +38,9 @@ function startLangServer(context: ExtensionContext) {
 			configurationSection: 'lspSample',
 			// Notify the server about file changes to '.clientrc files contain in the workspace
 			fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
+		},
+		initializationOptions: {
+			directDepsScript: context.asAbsolutePath(path.join('scripts', 'DirectDeps.hs'))
 		}
 	}
 	
