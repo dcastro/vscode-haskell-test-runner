@@ -2,6 +2,7 @@ import { InteroProxy } from "./interoProxy";
 import * as regex from './utils/regex';
 import { Range, Position } from "vscode-languageserver";
 import * as _ from 'lodash';
+import { Lazy } from "./utils/lazy";
 
 type File = string
 
@@ -39,10 +40,37 @@ export async function allTypes(intero: InteroProxy): Promise<Map<File, Test[]>> 
 }
 
 class Test {
+
+  private otherExprs: Expression[] | null;
+
   constructor(
-    public readonly range: Range,
-    public readonly titleRange: Range
-  ) {}
+    readonly range: Range,
+    readonly file: File,
+    otherExprs: Expression[]
+  ) {
+    this.otherExprs = otherExprs;
+  }
+
+  readonly titleRange: Lazy<Range | null> = new Lazy(() => {
+    const titleExpr = _(this.otherExprs)
+      .filter(e => e.type == "[Char]")
+      .sortBy([
+        (e: Expression) => e.range.start.line,
+        (e: Expression) => e.range.start.character
+      ])
+      .dropWhile(expr2 => isBefore(expr2.range.start, this.range.start))
+      .head();
+
+    if (titleExpr === undefined) {
+      console.error(`Title not found for test in file '${this.file}' at: ${this.range}`);
+      return null;
+    }
+
+    // we no longer need these
+    this.otherExprs = null;
+
+    return titleExpr.range;
+  });
 
   // TODO:
   // public readonly title: Lazy<string>
@@ -51,22 +79,7 @@ class Test {
 function exprToTest(expr: Expression, others: Expression[], file: File): Test | null {
   if (expr.type !== "SpecM () ()") return null;
 
-  const titleExpr = _(others)
-    .filter(e => e.type == "[Char]")
-    .sortBy([
-      (e: Expression) => e.range.start.line,
-      (e: Expression) => e.range.start.character
-    ])
-    .dropWhile(expr2 => isBefore(expr2.range.start, expr.range.start))
-    .head();
-
-  if (titleExpr === undefined) {
-    console.error(`Title not found for test in file '${file}' at: ${expr.range}`);
-    return null;
-  }
-
-  
-  return new Test(expr.range, titleExpr.range);
+  return new Test(expr.range, file, others);
 }
 
 function isBefore(x: Position, y: Position): Boolean {
