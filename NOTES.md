@@ -21,3 +21,5 @@
   * ???? we can't use all-types, because the file may have no expressions in it yet
 
 * when loading the HIE project, haskero only shows the actual targets, not ghc-mod for example. How does it do it?
+
+* Do expressions of type `[Char]` become of type `IsString s => s` when `-XOverloadedStrings` is enabled?

@@ -1,6 +1,6 @@
 import { InteroProxy } from "./interoProxy";
 import * as regex from './utils/regex';
-import { Range } from "vscode-languageserver";
+import { Range, Position } from "vscode-languageserver";
 import * as _ from 'lodash';
 
 type File = string
@@ -8,10 +8,6 @@ type File = string
 export type Expression = {
   range: Range,
   type: string
-}
-
-type Test = {
-  s: string
 }
 
 type Pair<A, B> = [A, B]
@@ -28,9 +24,12 @@ export async function allTypes(intero: InteroProxy): Promise<Map<File, Test[]>> 
 
   const fileTests = fileExprs.map(pair => {
     const [file, exprs] = pair;
+
+    //TODO: avoid resorting expressions for the same file
+    //nb: some files don't need sorting at all (i.e. if it doesnt contain any tests)
     
     const tests = exprs
-      .map(e => exprToTest(e, exprs))
+      .map(e => exprToTest(e, exprs, file))
       .filter(t => t !== null);
 
     return <Pair<File, Test[]>> [file, tests];
@@ -39,11 +38,41 @@ export async function allTypes(intero: InteroProxy): Promise<Map<File, Test[]>> 
   return fileTests;
 }
 
-function exprToTest(expr: Expression, others: Expression[]): Test | null {
+class Test {
+  constructor(
+    public readonly range: Range,
+    public readonly titleRange: Range
+  ) {}
+
+  // TODO:
+  // public readonly title: Lazy<string>
+}
+
+function exprToTest(expr: Expression, others: Expression[], file: File): Test | null {
   if (expr.type !== "SpecM () ()") return null;
 
-  //TODO:
-  return null;
+  const titleExpr = _(others)
+    .filter(e => e.type == "[Char]")
+    .sortBy([
+      (e: Expression) => e.range.start.line,
+      (e: Expression) => e.range.start.character
+    ])
+    .dropWhile(expr2 => isBefore(expr2.range.start, expr.range.start))
+    .head();
+
+  if (titleExpr === undefined) {
+    console.error(`Title not found for test in file '${file}' at: ${expr.range}`);
+    return null;
+  }
+
+  
+  return new Test(expr.range, titleExpr.range);
+}
+
+function isBefore(x: Position, y: Position): Boolean {
+  if (x.line != y.line)
+    return x.line < y.line;
+  return x.character < x.character;
 }
 
 function parseFiles(matches: RegExpExecArray[]): Map<File, Expression[]> {
