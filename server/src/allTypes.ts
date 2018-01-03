@@ -1,49 +1,79 @@
 import { InteroProxy } from "./interoProxy";
 import * as regex from './utils/regex';
 import { Range } from "vscode-languageserver";
+import * as _ from 'lodash';
 
-export type File = {
-  path: string,
-  exprs: Expression[]
-}
+type File = string
 
 export type Expression = {
   range: Range,
   type: string
 }
 
+type Test = {
+  s: string
+}
+
+type Pair<A, B> = [A, B]
+type Map<K, V> = Pair<K, V>[]
+
 // reg expressions in js are mutable (???) so we have to create a new one every time.
 const pattern = () => /^([^:]+):\((\d+),(\d+)\)-\((\d+),(\d+)\): (.+)$/mg;
 
-export async function allTypes(intero: InteroProxy): Promise<File[]> {
+export async function allTypes(intero: InteroProxy): Promise<Map<File, Test[]>> {
   const rsp = await intero.sendRawRequest(':all-types');
 
   const matches = regex.extract(rsp.rawout, pattern());
-  const files = parseFiles(matches);
+  const fileExprs = parseFiles(matches);
 
-  // TODO: transform Expression[] into Testp[]
+  const fileTests = fileExprs.map(pair => {
+    const [file, exprs] = pair;
+    
+    const tests = exprs
+      .map(e => exprToTest(e, exprs))
+      .filter(t => t !== null);
 
-  return files;
+    return <Pair<File, Test[]>> [file, tests];
+  });
+
+  return fileTests;
 }
 
-function parseFiles(matches: RegExpExecArray[]): File[] {
+function exprToTest(expr: Expression, others: Expression[]): Test | null {
+  if (expr.type !== "SpecM () ()") return null;
 
-  const initialState: [File[], File] = [ [] , null ];
+  //TODO:
+  return null;
+}
 
-  const [files, _] = matches.reduce((state, match) => {
-    let [files, currentFile] = state;
+function parseFiles(matches: RegExpExecArray[]): Map<File, Expression[]> {
+  type State = {
+    map: Map<File, Expression[]>,
+    current: Current | null
+  }
 
-    if (currentFile === null || currentFile.path !== match[1]) {
-      currentFile = {
-        path: match[1],
-        exprs: []
-      };
-      files.push(currentFile);
+  type Current = {
+    file: File
+    exprs: Expression[]
+  }
+
+  const initialState: State = {
+    map: [],
+    current: null
+  }
+
+  const finalState = matches.reduce((state, match) => {
+    if (state.current === null || state.current.file !== match[1]) {
+      state.current = { file: match[1], exprs: [] };
+      state.map.push([state.current.file, state.current.exprs]);
     }
+
+    const currentFile = state.current.file;
+    const currentExprs = state.current.exprs;
 
     const exprType = match[6];
     if (exprType === '[Char]' || exprType === 'SpecM () ()') {
-      currentFile.exprs.push({
+      currentExprs.push({
         range: {
           start: {
             line: parseInt(match[2]),         // TODO: adjust 0-based to 1-based here
@@ -58,8 +88,8 @@ function parseFiles(matches: RegExpExecArray[]): File[] {
       });
     }
 
-    return <[File[], File]> [files, currentFile];
+    return state;
   }, initialState);
 
-  return files;
+  return finalState.map;
 }

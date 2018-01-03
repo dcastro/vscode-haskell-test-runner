@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
-		"noImplicitAny": false,
+		"strict": true,
 		"noImplicitReturns": true,		
 		"target": "es6",
 		"module": "commonjs",
