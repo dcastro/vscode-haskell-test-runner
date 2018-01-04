@@ -26,12 +26,21 @@ export async function allTypes(intero: InteroProxy): Promise<Map<File, Test[]>> 
   const fileTests = fileExprs.map(pair => {
     const [file, exprs] = pair;
 
-    //TODO: avoid resorting expressions for the same file
-    //nb: some files don't need sorting at all (i.e. if it doesnt contain any tests)
+    // lazy, so we don't sort the string expressions twice for multiple `Test`s in the same file
+    // also, if the file contains no tests, then `sortedStringExprs` won't be evaluated at all
+    const sortedStringExprs = new Lazy<Expression[]>(() =>{
+      return _(exprs)
+        .filter(e => e.type === "[Char]")
+        .sortBy([
+          (e: Expression) => e.range.start.line,
+          (e: Expression) => e.range.start.character
+        ])
+        .value()
+    });
     
     const tests = exprs
-      .map(e => exprToTest(e, exprs, file))
-      .filter(t => t !== null);
+      .filter(e => e.type === "SpecM () ()")
+      .map(e => new Test(e.range, file, sortedStringExprs))
 
     return <Pair<File, Test[]>> [file, tests];
   });
@@ -41,45 +50,31 @@ export async function allTypes(intero: InteroProxy): Promise<Map<File, Test[]>> 
 
 class Test {
 
-  private otherExprs: Expression[] | null;
 
   constructor(
     readonly range: Range,
     readonly file: File,
-    otherExprs: Expression[]
+    readonly stringExprs: Lazy<Expression[]>
   ) {
-    this.otherExprs = otherExprs;
+    this.stringExprs = stringExprs;
   }
 
   readonly titleRange: Lazy<Range | null> = new Lazy(() => {
-    const titleExpr = _(this.otherExprs)
-      .filter(e => e.type == "[Char]")
-      .sortBy([
-        (e: Expression) => e.range.start.line,
-        (e: Expression) => e.range.start.character
-      ])
-      .dropWhile(expr2 => isBefore(expr2.range.start, this.range.start))
-      .head();
+    const titleExpr =
+      _(this.stringExprs.get)
+        .dropWhile(expr2 => isBefore(expr2.range.start, this.range.start))
+        .head();
 
     if (titleExpr === undefined) {
       console.error(`Title not found for test in file '${this.file}' at: ${this.range}`);
       return null;
     }
 
-    // we no longer need these
-    this.otherExprs = null;
-
     return titleExpr.range;
   });
 
   // TODO:
   // public readonly title: Lazy<string>
-}
-
-function exprToTest(expr: Expression, others: Expression[], file: File): Test | null {
-  if (expr.type !== "SpecM () ()") return null;
-
-  return new Test(expr.range, file, others);
 }
 
 function isBefore(x: Position, y: Position): Boolean {
