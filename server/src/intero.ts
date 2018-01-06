@@ -2,7 +2,7 @@ import * as cp from 'child_process';
 import { ChildProcess } from 'child_process';
 import { InteroProxy, RawResponse } from './interoProxy';
 import { Lazy } from './utils/lazy';
-import { File, allTypes } from './allTypes';
+import { allTypes, File, Test, Map } from './allTypes';
 
 export async function spawnIntero(targets: string[]): Promise<InteroSvc> {
 
@@ -32,7 +32,7 @@ export class Intero {
     readonly targets: string[]
   ) {}
 
-  readonly files = new Lazy<Promise<File[]>>(() => {
+  readonly files = new Lazy<Promise<Map<File, Test[]>>>(() => {
     return allTypes(this.proxy);
   });
 }
@@ -45,7 +45,7 @@ export class InteroFailed {
 
   public async retry(): Promise<InteroSvc> {
     // TODO:
-    return null;
+    throw new Error("not imp");
   }
 }
 

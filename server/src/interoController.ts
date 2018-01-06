@@ -19,6 +19,6 @@ export class InteroController {
    */
   public async findTarget(file: string): Promise<string> {
     // TODO:
-    return null;
+    throw new Error("not implemented");
   }
 }

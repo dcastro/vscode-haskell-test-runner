@@ -9,7 +9,9 @@ import {
 	Diagnostic, DiagnosticSeverity, InitializeResult, TextDocumentPositionParams, CompletionItem, 
 	CompletionItemKind,
 	CodeLensParams,
-	CancellationToken
+	CancellationToken,
+	InitializeError,
+	ResponseError
 } from 'vscode-languageserver';
 import * as stack from './stack';
 import { InteroSvc, spawnIntero, Intero } from './intero';
@@ -31,33 +33,35 @@ let intero: InteroController;
 // After the server has started the client sends an initialize request. The server receives
 // in the passed params the rootPath of the workspace plus the client capabilities. 
 let workspaceRoot: string;
-connection.onInitialize(async (params): Promise<InitializeResult> => {
-	workspaceRoot = params.rootPath;
+connection.onInitialize((params): Promise<InitializeResult> | ResponseError<InitializeError> => {
+	if (!params.rootPath) 
+		return new ResponseError(1, "No folder is open. Haskell Test Runner can only run in the context of a stack project.");
 
+	workspaceRoot = params.rootPath;
 	const directDepsScript = params.initializationOptions.directDepsScript
 
-	const targets = await stack.getTargets(workspaceRoot, directDepsScript);
+	return stack.getTargets(workspaceRoot, directDepsScript).then(async targets => {
+		console.log('Initializing targets:');
+		targets.map(x => console.log(x));
 
-	console.log('Initializing targets:');
-	targets.map(x => console.log(x));
+		const svcs = await Promise.all(targets.map(spawnIntero));
 
-	const svcs = await Promise.all(targets.map(spawnIntero));
+		intero = new InteroController(svcs);
 
-	intero = new InteroController(svcs);
-
-	return {
-		capabilities: {
-			// Tell the client that the server works in FULL text document sync mode
-			textDocumentSync: documents.syncKind,
-			// Tell the client that the server support code complete
-			completionProvider: {
-				resolveProvider: true
-			},
-			codeLensProvider : {
-				resolveProvider: true
+		return {
+			capabilities: {
+				// Tell the client that the server works in FULL text document sync mode
+				textDocumentSync: documents.syncKind,
+				// Tell the client that the server support code complete
+				completionProvider: {
+					resolveProvider: true
+				},
+				codeLensProvider : {
+					resolveProvider: true
+				}
 			}
 		}
-	}
+	});
 });
 
 connection.onCodeLens(async (ps: CodeLensParams, c: CancellationToken) => {

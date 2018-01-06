@@ -54,7 +54,7 @@ class ResponseReader {
             //On linux, issue with synchronisation between stdout and stderr :
             // - use a set time out to wait 50ms for stderr to finish to write data after we recieve the EOC char from stdin
             setTimeout(this.onResponse(this.rawout), 50);
-            this.rawout = responsesChunks.shift();
+            this.rawout = responsesChunks.shift()!;
         }
     }
 
@@ -83,7 +83,7 @@ class ResponseReader {
 export class InteroProxy {
 
     private isInteroProcessUp: boolean = true;
-    private responseReader: ResponseReader;
+    private responseReader: ResponseReader | null;
 
     /**
      * Error message emitted when interoProcess emits an error and stop to working
@@ -127,7 +127,8 @@ export class InteroProxy {
         if (!this.isInteroProcessUp) {
             return Promise.reject(this.errorMsg);
         }
-        let executor = (resolve, reject): void => {
+
+        let executor = (resolve: (r: RawResponse) => void, reject: any): void => {
             let req = rawRequest + '\n';
             this.interoProcess.stdin.write(req);
             this.onRawResponseQueue.push({ resolve: resolve, reject: reject });
@@ -156,19 +157,19 @@ export class InteroProxy {
     //executed when an error is emitted  on stdin
     private onStdInError = (er: any) => {
         if (this.onRawResponseQueue.length > 0) {
-            let resolver = this.onRawResponseQueue.shift();
+            let resolver = this.onRawResponseQueue.shift()!;
             resolver.reject(er);
         }
     }
 
     private onExit = (code: number) => {
         this.isInteroProcessUp = false;
-        let rawout = this.responseReader.rawout;
-        let rawerr = this.responseReader.rawerr;
-        this.responseReader.clear();
+        let rawout = this.responseReader!.rawout;
+        let rawerr = this.responseReader!.rawerr;
+        this.responseReader!.clear();
         this.errorMsg = `process exited with code ${code}\r\n\r\nstdout:\r\n${rawout}\r\n\r\nstderr:\r\n${rawerr}\r\n`;
         if (this.onRawResponseQueue.length > 0) {
-            let resolver = this.onRawResponseQueue.shift();
+            let resolver = this.onRawResponseQueue.shift()!;
             resolver.reject(this.errorMsg);
         }
     }
@@ -180,7 +181,7 @@ export class InteroProxy {
 
     private onResponse = (rawout: string, rawerr: string) => {
         if (this.onRawResponseQueue.length > 0) {
-            let resolver = this.onRawResponseQueue.shift();
+            let resolver = this.onRawResponseQueue.shift()!;
             resolver.resolve(new RawResponse(rawout, rawerr));
         }
     }

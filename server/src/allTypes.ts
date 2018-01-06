@@ -4,15 +4,15 @@ import { Range, Position } from "vscode-languageserver";
 import * as _ from 'lodash';
 import { Lazy } from "./utils/lazy";
 
-type File = string
+export type File = string
 
 export type Expression = {
   range: Range,
   type: string
 }
 
-type Pair<A, B> = [A, B]
-type Map<K, V> = Pair<K, V>[]
+export type Pair<A, B> = [A, B]
+export type Map<K, V> = Pair<K, V>[]
 
 // reg expressions in js are mutable (???) so we have to create a new one every time.
 const pattern = () => /^([^:]+):\((\d+),(\d+)\)-\((\d+),(\d+)\): (.+)$/mg;
@@ -48,9 +48,7 @@ export async function allTypes(intero: InteroProxy): Promise<Map<File, Test[]>> 
   return fileTests;
 }
 
-class Test {
-
-
+export class Test {
   constructor(
     readonly range: Range,
     readonly file: File,
