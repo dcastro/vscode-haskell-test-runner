@@ -2,7 +2,8 @@ import * as cp from 'child_process';
 import { ChildProcess } from 'child_process';
 import { InteroProxy, RawResponse } from './interoProxy';
 import { Lazy } from './utils/lazy';
-import { allTypes, File, Test, Map } from './allTypes';
+import { Map } from './utils/map';
+import { allTypes, File, Test } from './allTypes';
 
 export async function spawnIntero(targets: string[]): Promise<InteroSvc> {
 
