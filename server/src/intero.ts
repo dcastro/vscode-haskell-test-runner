@@ -3,7 +3,8 @@ import { ChildProcess } from 'child_process';
 import { InteroProxy, RawResponse } from './interoProxy';
 import { Lazy } from './utils/lazy';
 import { Map } from './utils/map';
-import { allTypes, File, Test } from './allTypes';
+import { allTypes, File } from './allTypes';
+import { Test } from './test';
 
 export async function spawnIntero(targets: string[]): Promise<InteroSvc> {
 
