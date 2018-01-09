@@ -1,6 +1,6 @@
 import { InteroProxy } from "./interoProxy";
 import * as regex from './utils/regex';
-import { Range, Position } from "vscode-languageserver";
+import { Range, Position, TextDocument } from "vscode-languageserver";
 import * as _ from 'lodash';
 import { Lazy } from "./utils/lazy";
 import {Pair, Map} from "./utils/map";
@@ -69,8 +69,32 @@ export class Test {
     return titleExpr.range;
   });
 
-  // TODO:
-  // public readonly title: Lazy<string>
+  public readonly title: (t: TextDocument) => string | null =
+    _.memoize((t: TextDocument) => {
+
+      const lines = t.getText().split("\n");
+      const titleRange = this.titleRange.get
+
+      if (titleRange == null)
+        return null;
+
+      /**
+       * TODO:
+       * handle strings spanning multiple lines
+       * handle multiline \ \ strings
+       * handle strings that are vars, e.g. describe someStringVar
+       * handle strings with vars in between, e.g. "a" ++ b ++ "c"
+       * 
+       */
+      const matchingLines = lines.slice(titleRange.start.line - 1, titleRange.end.line)
+    
+      if (matchingLines.length !== 1) {
+        return "N/A";
+      }
+      else {
+        return matchingLines[0].substring(titleRange.start.character, titleRange.end.character -2);
+      }
+    })
 }
 
 function isBefore(x: Position, y: Position): Boolean {

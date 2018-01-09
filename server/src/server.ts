@@ -11,7 +11,8 @@ import {
 	CodeLensParams,
 	CancellationToken,
 	InitializeError,
-	ResponseError
+	ResponseError,
+	InitializeRequest
 } from 'vscode-languageserver';
 import * as stack from './stack';
 import { InteroSvc, spawnIntero, Intero } from './intero';
@@ -64,26 +65,32 @@ connection.onInitialize((params): Promise<InitializeResult> | ResponseError<Init
 	});
 });
 
-connection.onCodeLens(async (ps: CodeLensParams, c: CancellationToken) => {
+connection.onCodeLens(async (ps: CodeLensParams) => {
 
 	const uri = ps.textDocument.uri;
+	const path = uri.replace("file://", "");
 	const doc = documents.get(uri);
 
 	const types = intero.svcs.map(async svc => {
 		if (svc instanceof Intero) {
-			return {
-				targets: svc.targets,
-				allTypes: await svc.files.get
-			};
-		}
-		else {
-			return {
-				targets: svc.targets
-			};
+			const files = await svc.files.get
+			const match = files.find(f => {
+				const [file, tests] = f;
+				return file === path;
+			})
+
+			if (match !== undefined) {
+				const [file, tests] = match;
+				console.log(`Tests for ${file}`);
+				
+				tests.map(t => {
+					console.log(t.title(doc));
+				})
+			}
 		}
 	})
 
-	console.log(JSON.stringify(await Promise.all(types), null, 2));
+	await Promise.all(types);
 
 	return [];
 });
