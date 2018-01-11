@@ -78,11 +78,11 @@ function parseFiles(matches: RegExpExecArray[]): Map<File, Expression[]> {
         range: {
           start: {
             line: parseInt(match[2]) - 1, // Intero's ranges are 1-based, and typescript's are 0-based
-            character: parseInt(match[3]) // TODO: do we need to subtract 1 from character index as well?
+            character: parseInt(match[3]) - 1
           },
           end: {
             line: parseInt(match[4]) - 1,
-            character: parseInt(match[5])
+            character: parseInt(match[5]) - 1
           } 
         },
         type: match[6]

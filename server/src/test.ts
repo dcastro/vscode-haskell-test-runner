@@ -29,12 +29,6 @@ export class Test {
   readonly title: (t: TextDocument) => string | null =
     _.memoize((t: TextDocument) => {
 
-      const lines = t.getText().split("\n");
-      const titleRange = this.titleRange.get
-
-      if (titleRange == null)
-        return null;
-
       /**
        * TODO:
        * handle strings spanning multiple lines
@@ -43,14 +37,13 @@ export class Test {
        * handle strings with vars in between, e.g. "a" ++ b ++ "c"
        * 
        */
-      const matchingLines = lines.slice(titleRange.start.line, titleRange.end.line + 1)
-    
-      if (matchingLines.length !== 1) {
-        return "N/A";
-      }
-      else {
-        return matchingLines[0].substring(titleRange.start.character, titleRange.end.character -2);
-      }
+
+      const titleRange = this.titleRange.get
+
+      if (titleRange == null)
+        return null;
+      
+      return getText(t, titleRange);
     })
 }
 
@@ -58,4 +51,14 @@ function isBefore(x: Position, y: Position): Boolean {
   if (x.line != y.line)
     return x.line < y.line;
   return x.character < x.character;
+}
+
+/** 
+ * From: https://github.com/Microsoft/vscode-languageserver-node/blob/cad65160940993c2804452718d2085395274e97e/types/src/main.ts#L1622
+ * Unreleased as of this moment.
+ */
+function getText(t: TextDocument, range: Range): string {
+  let start = t.offsetAt(range.start);
+  let end = t.offsetAt(range.end);
+  return t.getText().substring(start, end);
 }
