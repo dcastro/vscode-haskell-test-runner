@@ -14,7 +14,7 @@
 	"dependencies": {
 		"@types/lodash": "^4.14.91",
 		"lodash": "^4.17.4",
-		"vscode-languageserver": "^3.4.2"
+		"vscode-languageserver": "^3.5.0"
 	},
 	"scripts": {
 		"installServer": "installServerIntoExtension ../client ./package.json ./tsconfig.json",
