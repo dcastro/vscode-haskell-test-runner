@@ -84,7 +84,7 @@ connection.onCodeLens(async (ps: CodeLensParams) => {
 				const [_, tests] = match;
 
 				return tests.map(t => 
-					new TestCodeLens({start: t.range.start, end: t.range.end}, t.title(doc) || "N/A"))
+					new TestCodeLens({start: t.range.start, end: t.range.start}, t.title(doc) || "N/A"))
 			}
 		}
 

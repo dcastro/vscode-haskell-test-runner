@@ -43,7 +43,7 @@ export class Test {
        * handle strings with vars in between, e.g. "a" ++ b ++ "c"
        * 
        */
-      const matchingLines = lines.slice(titleRange.start.line - 1, titleRange.end.line)
+      const matchingLines = lines.slice(titleRange.start.line, titleRange.end.line + 1)
     
       if (matchingLines.length !== 1) {
         return "N/A";
