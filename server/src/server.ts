@@ -18,6 +18,7 @@ import * as stack from './stack';
 import { InteroSvc, spawnIntero, Intero } from './intero';
 import { spawn } from 'child_process';
 import { InteroController } from './interoController';
+import { TestCodeLens } from './testCodeLens';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -75,24 +76,27 @@ connection.onCodeLens(async (ps: CodeLensParams) => {
 		if (svc instanceof Intero) {
 			const files = await svc.files.get
 			const match = files.find(f => {
-				const [file, tests] = f;
+				const [file, _] = f;
 				return file === path;
 			})
 
 			if (match !== undefined) {
-				const [file, tests] = match;
-				console.log(`Tests for ${file}`);
-				
-				tests.map(t => {
-					console.log(t.title(doc));
-				})
+				const [_, tests] = match;
+
+				return tests.map(t => 
+					new TestCodeLens({start: t.range.start, end: t.range.end}, t.title(doc) || "N/A"))
 			}
 		}
+
+		return [];
 	})
 
-	await Promise.all(types);
+	const lenses = await Promise.all(types);
+	const flattened = [].concat.apply([], lenses);
 
-	return [];
+	console.log("----- Lenses -----");
+	console.log(JSON.stringify(flattened, null, 2));
+	return flattened;
 });
 
 
