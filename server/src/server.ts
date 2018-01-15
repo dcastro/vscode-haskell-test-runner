@@ -12,13 +12,20 @@ import {
 	CancellationToken,
 	InitializeError,
 	ResponseError,
-	InitializeRequest
+	InitializeRequest,
+	TextDocumentChangeEvent,
+	DidChangeTextDocumentParams,
+	WillSaveTextDocumentParams,
+	TextDocumentSyncKind,
+	CodeLensRequest,
+	CodeLensRegistrationOptions
 } from 'vscode-languageserver';
 import * as stack from './stack';
 import { InteroSvc, spawnIntero, Intero } from './intero';
 import { spawn } from 'child_process';
 import { InteroController } from './interoController';
 import { TestCodeLens } from './testCodeLens';
+import { filepath } from './utils/textDocumentExt';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -59,7 +66,7 @@ connection.onInitialize((params): Promise<InitializeResult> | ResponseError<Init
 					resolveProvider: true
 				},
 				codeLensProvider : {
-					resolveProvider: true
+					resolveProvider: false
 				}
 			}
 		}
@@ -69,7 +76,7 @@ connection.onInitialize((params): Promise<InitializeResult> | ResponseError<Init
 connection.onCodeLens(async (ps: CodeLensParams) => {
 
 	const uri = ps.textDocument.uri;
-	const path = uri.replace("file://", "");
+	const path = filepath(ps.textDocument);
 	const doc = documents.get(uri);
 
 	const types = intero.svcs.map(async svc => {
@@ -94,11 +101,17 @@ connection.onCodeLens(async (ps: CodeLensParams) => {
 	const lenses = await Promise.all(types);
 	const flattened = [].concat.apply([], lenses);
 
-	console.log("----- Lenses -----");
-	console.log(JSON.stringify(flattened, null, 2));
+	// console.log("----- Lenses -----");
+	// console.log(JSON.stringify(flattened, null, 2));
+
 	return flattened;
 });
 
+documents.onDidSave(async e => {
+	const file = filepath(e.document);
+
+	await intero.reloadSvcForFile(file);
+})
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.

@@ -1,10 +1,10 @@
-import { InteroSvc } from "./intero";
+import { InteroSvc, Intero } from "./intero";
 import { CodeLens } from "vscode-languageserver";
 
 
 export class InteroController {
   public constructor(
-    readonly svcs: InteroSvc[]
+    public svcs: InteroSvc[]
   ) { }
 
 
@@ -20,5 +20,19 @@ export class InteroController {
   public async findTarget(file: string): Promise<string> {
     // TODO:
     throw new Error("not implemented");
+  }
+
+  public async reloadSvcForFile(file: string): Promise<void> {
+    const promises = this.svcs.map(async svc => {
+      if (! (svc instanceof Intero))
+        return svc;
+  
+      if (! await svc.containsFile(file))
+        return svc;
+  
+      return await svc.reload();
+    });
+
+    this.svcs = await Promise.all(promises);
   }
 }

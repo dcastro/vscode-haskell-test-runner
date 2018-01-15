@@ -1,10 +1,10 @@
-import { InteroProxy } from "./interoProxy";
-import * as regex from './utils/regex';
+import { InteroProxy } from "../interoProxy";
+import * as regex from '../utils/regex';
 import { Range, Position, TextDocument } from "vscode-languageserver";
 import * as _ from 'lodash';
-import { Lazy } from "./utils/lazy";
-import {Pair, Map} from "./utils/map";
-import { Test } from "./test";
+import { Lazy } from "../utils/lazy";
+import {Pair, Map} from "../utils/map";
+import { Test } from "../test";
 
 export type File = string
 

@@ -1,6 +1,6 @@
 import { Position, TextDocument, Range } from "vscode-languageserver";
 import { Lazy } from "./utils/lazy";
-import { Expression, File } from "./allTypes";
+import { Expression, File } from "./commands/allTypes";
 import * as _ from 'lodash';
 
 export class Test {
