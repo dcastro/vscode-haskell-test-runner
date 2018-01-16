@@ -1,27 +1,32 @@
-# Haskell Test Runner for VSCode
+# Haskell Test Runner for VSCode (WIP)
+
+A plugin for VSCode that lets you run your Hspec tests, either manually or automatically “on save”, and view the results without leaving the editor.
+
+![Screenshot showing code lenses](https://raw.githubusercontent.com/dcastro/vscode-haskell-test-runner/master/img/screenshot.png)
+
+## Installation
+
+* This works on [`stack`][stack] projects only.
+* Install Intero in your project: `stack build intero`
+* Search for `vscode-haskell-test-runner` in VSCode's marketplace (not yet available)
 
 ## Troubleshooting
 
-* > cannot satisfy -package quickcheck-instances-0.3.12
+* > cannot satisfy -package (package-name)
 
-    You might have to run `stack build --test` once
+    You might have to run `stack build --test` once and then reload vscode.
 
-## This is the README for the "languageprovider-sample"
+## Development
 
-This folder contains a sample VS code extension that demonstrates an extension that runs a language server
+`npm i && npm run compile`
 
-The extension observes all 'plaintext' documents (documents from all editors not associated with a language)
-and uses the server to provide validation and completion proposals.
+* `F5` to start debugging the client.
+* `F1` > `Debug: Select and Start Debugging` > `Attach to Server` to debug the server
 
-The code for the extension is in the 'client' folder. It uses the 'vscode-languageclient' node module to launch the language server.
+## Credits
 
-The language server is located in the 'server' folder.
+Thanks to [Julien Vannesson][julien] for letting me reuse part of his code for interacting with intero and for his great work with [Haskero][haskero].
 
-## How to run locally
-
-* `npm install` to initialize the extension and the server
-* `npm run compile` to compile the extension and the server
-* open this folder in VS Code. In the Debug viewlet, run 'Launch Client' from drop-down to launch the extension and attach to the extension.
-* create a file `test.txt`, and type `typescript`. You should see a validation error.
-* to debug the server use the 'Attach to Server' launch config.
-* set breakpoints in the client or the server.
+ [stack]: https://docs.haskellstack.org/en/stable/install_and_upgrade/
+ [julien]: https://twitter.com/vavans
+ [haskero]: https://gitlab.com/vannnns/haskero
