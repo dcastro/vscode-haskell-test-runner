@@ -6,17 +6,28 @@
 
 import * as path from 'path';
 
-import { workspace, ExtensionContext } from 'vscode';
+import { workspace, ExtensionContext, languages, commands } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
+import { TestCodeLensProvider } from './testCodeLensProvider';
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
 
-	startLangServer(context);
-	
+	const client = startLangServer(context);
+
+	const codeLensProv = new TestCodeLensProvider(client)
+	context.subscriptions.push(languages.registerCodeLensProvider('haskell', codeLensProv));
+
+	await client.onReady();
+	codeLensProv.onDidChangeCodeLensesEmitter.fire();
+
+	workspace.onDidSaveTextDocument(async doc => {
+		await client.sendRequest("htr/reloadIntero", doc.fileName);
+		codeLensProv.onDidChangeCodeLensesEmitter.fire();
+	});
 };
 
 
-function startLangServer(context: ExtensionContext) {
+function startLangServer(context: ExtensionContext): LanguageClient {
 	// The server is implemented in node
 	let serverModule = context.asAbsolutePath(path.join('server', 'server.js'));
 	// The debug options for the server
@@ -45,9 +56,11 @@ function startLangServer(context: ExtensionContext) {
 	}
 	
 	// Create the language client and start the client.
-	let disposable = new LanguageClient('htr', 'Haskell Test Runner', serverOptions, clientOptions).start();
+	const client = new LanguageClient('htr', 'Haskell Test Runner', serverOptions, clientOptions);
 	
 	// Push the disposable to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
-	context.subscriptions.push(disposable);
+	context.subscriptions.push(client.start());
+
+	return client;
 }

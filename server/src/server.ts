@@ -18,7 +18,9 @@ import {
 	WillSaveTextDocumentParams,
 	TextDocumentSyncKind,
 	CodeLensRequest,
-	CodeLensRegistrationOptions
+	CodeLensRegistrationOptions,
+	CodeLens,
+	ExecuteCommandRequest
 } from 'vscode-languageserver';
 import * as stack from './stack';
 import { InteroSvc, spawnIntero, Intero } from './intero';
@@ -56,6 +58,8 @@ connection.onInitialize((params): Promise<InitializeResult> | ResponseError<Init
 		const svcs = await Promise.all(targets.map(spawnIntero));
 
 		intero = new InteroController(svcs);
+		
+		console.log('Initialization done');
 
 		return {
 			capabilities: {
@@ -64,9 +68,6 @@ connection.onInitialize((params): Promise<InitializeResult> | ResponseError<Init
 				// Tell the client that the server support code complete
 				completionProvider: {
 					resolveProvider: true
-				},
-				codeLensProvider : {
-					resolveProvider: false
 				}
 			}
 		}
@@ -99,7 +100,7 @@ connection.onCodeLens(async (ps: CodeLensParams) => {
 	})
 
 	const lenses = await Promise.all(types);
-	const flattened = [].concat.apply([], lenses);
+	const flattened: TestCodeLens[] = [].concat.apply([], lenses);
 
 	// console.log("----- Lenses -----");
 	// console.log(JSON.stringify(flattened, null, 2));
@@ -107,10 +108,8 @@ connection.onCodeLens(async (ps: CodeLensParams) => {
 	return flattened;
 });
 
-documents.onDidSave(async e => {
-	const file = filepath(e.document);
-
-	await intero.reloadSvcForFile(file);
+connection.onRequest("htr/reloadIntero", async filename => {
+	await intero.reloadSvcForFile(filename);
 })
 
 // The content of a text document has changed. This event is emitted

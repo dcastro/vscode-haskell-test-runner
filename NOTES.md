@@ -23,3 +23,9 @@
 * Do expressions of type `[Char]` become of type `IsString s => s` when `-XOverloadedStrings` is enabled?
 
 * Try replacing utils/map/Map with es2015's native Map (needs `map` and `filter` functions)
+
+* Have a look at TextDocuments.syncKind
+
+* what if changes are made while intero is loading??
+
+* when the "run all tests [in file/in project]" vscode option is triggered, forcefully save file and then run tests
